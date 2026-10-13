@@ -1,0 +1,70 @@
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../../assets/fonts/inter.woff2') format('woff2');
+}
+
+:root {
+  --accent: #d37918;
+  --accent-bg: color-mix(in srgb, var(--accent) 20%, #0e0e0e);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --on-accent: #1a0f02;
+
+  --bg-top: #1b1b1b;
+  --bg-0: #0e0e0e;
+  --bg-1: #151515;
+  --bg-2: #191919;
+  --bg-3: #1d1d1d;
+  --bg-deep: #090909;
+  --bg-stage: #2b2a29;
+  --bg-win: #0a0a0a;
+  --bg-pop: #181818;
+
+  --fg: #e4e4e4;
+  --fg-1: #969696;
+  --fg-2: #8f8f8f;
+  --fg-3: #6b6b6b;
+  --fg-4: #404040;
+
+  --line: #222222;
+  --line-b: #373737;
+  --hover: rgba(255, 255, 255, 0.06);
+  --press: rgba(255, 255, 255, 0.1);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --vol: #8aa51c;
+  --danger: #e5604f;
+
+  --radius: 8px;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --accent-bg: color-mix(in srgb, var(--accent) 24%, #e6e6e6);
+  --on-accent: #fff;
+
+  --bg-top: #bdbdbd;
+  --bg-0: #e9e9e9;
+  --bg-1: #d2d2d2;
+  --bg-2: #dadada;
+  --bg-3: #cfcfcf;
+  --bg-deep: #f4f4f4;
+  --bg-win: #a9a9a9;
+  --bg-pop: #efefef;
+
+  --fg: #202020;
+  --fg-1: #4a4a4a;
+  --fg-2: #555555;
+  --fg-3: #7a7a7a;
+  --fg-4: #a4a4a4;
+
+  --line: #c4c4c4;
+  --line-b: #b0b0b0;
+  --hover: rgba(0, 0, 0, 0.07);
+  --press: rgba(0, 0, 0, 0.12);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  --vol: #9bb82a;
+  color-scheme: light;
+}

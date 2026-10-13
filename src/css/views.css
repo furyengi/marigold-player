@@ -1,0 +1,75 @@
+.view-head { flex: none; display: flex; align-items: center; gap: 4px; padding: 14px 18px 12px; border-bottom: 1px solid var(--line); margin: 0 18px; padding-left: 0; padding-right: 0; min-height: 66px; }
+.crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; flex: 1; font-size: 14px; color: var(--fg-1); overflow: hidden; }
+.crumb { padding: 4px 6px; border-radius: 6px; white-space: nowrap; color: var(--fg-1); }
+.crumb:hover:not(.last) { background: var(--hover); color: var(--fg); }
+.crumb.last { color: var(--fg); font-weight: 600; cursor: default; }
+.crumb-sep { color: var(--fg-3); flex: none; }
+.crumb-sep svg { width: 12px; height: 12px; }
+.view-title { font-size: 14px; font-weight: 500; padding: 0 6px; }
+.count { color: var(--fg-3); font-size: 13px; margin-right: 10px; white-space: nowrap; }
+.search { display: flex; align-items: center; gap: 8px; width: 270px; height: 34px; background: var(--bg-1); border-radius: 7px; padding: 0 10px; color: var(--fg-2); margin-left: 6px; }
+.search input { background: none; border: 0; outline: none; flex: 1; min-width: 0; color: var(--fg); user-select: text; }
+.search input::placeholder { color: var(--fg-3); }
+.search:focus-within { box-shadow: 0 0 0 1px var(--accent); }
+.tool { position: relative; }
+
+.view-body { flex: 1; overflow-y: auto; padding: 16px 18px 24px; min-height: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 24px 16px; }
+.card { display: block; text-align: left; width: 100%; color: var(--fg-1); border-radius: 10px; }
+.card .thumb { aspect-ratio: 16/9; border-radius: 9px; background: #000 center/cover no-repeat; position: relative; overflow: hidden; display: grid; place-items: center; color: var(--fg-3); transition: box-shadow .12s; }
+.card:hover .thumb, .card:focus-visible .thumb { box-shadow: 0 0 0 2px var(--accent); }
+.card .thumb.folder { background: var(--bg-1); color: var(--fg-2); }
+.card .thumb svg.big { width: 34px; height: 34px; }
+.card .name { margin-top: 10px; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
+.card .sub { font-size: 12px; color: var(--fg-3); padding: 2px 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card.current .name { color: var(--accent); }
+.card.watched .name { color: var(--fg-3); }
+.prog { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--accent); }
+.badge { position: absolute; right: 6px; top: 6px; padding: 2px 6px; border-radius: 5px; background: rgba(0, 0, 0, .65); color: #ddd; font-size: 11px; font-variant-numeric: tabular-nums; }
+.art-ph { width: 100%; height: 100%; display: grid; place-items: center; color: rgba(255, 255, 255, .5); }
+
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 6px 24px; }
+.row { display: flex; align-items: center; gap: 10px; padding: 4px 6px; border-radius: 7px; color: var(--fg-1); text-align: left; min-width: 0; width: 100%; }
+.row:hover { background: var(--hover); color: var(--fg); }
+.row.current { color: var(--accent); }
+.row.watched { color: var(--fg-3); }
+.row .rthumb { width: 28px; height: 28px; border-radius: 4px; background: #000 center/cover no-repeat; flex: none; display: grid; place-items: center; color: var(--fg-3); position: relative; overflow: hidden; }
+.row.folder .rthumb { background: transparent; color: var(--fg-2); }
+.row .rname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.row .rmeta { color: var(--fg-3); font-size: 12px; flex: none; }
+.row .prog { height: 2px; }
+.list.single { grid-template-columns: 1fr; gap: 2px; }
+.list.single .row { padding: 6px 10px; }
+.list.single .rthumb { width: 36px; height: 36px; }
+
+.section { margin-bottom: 30px; }
+.section h2 { margin: 0 0 14px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.section h2 .link { margin-left: auto; font-size: 12.5px; color: var(--fg-2); font-weight: 400; padding: 3px 8px; border-radius: 6px; }
+.section h2 .link:hover { background: var(--hover); color: var(--fg); }
+.hscroll { display: grid; grid-auto-flow: column; grid-auto-columns: 232px; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+.folder-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.fcard { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-1); border-radius: 10px; text-align: left; color: var(--fg); }
+.fcard:hover { background: var(--bg-3); }
+.fcard svg { color: var(--accent); }
+.fcard .n { font-size: 14px; }
+.fcard .p { font-size: 12px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcard > div { min-width: 0; }
+
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; color: var(--fg-2); padding: 40px; }
+.empty img { width: 170px; image-rendering: pixelated; border-radius: 10px; }
+.empty h3 { margin: 0; font-size: 18px; color: var(--fg); font-weight: 500; }
+.empty p { margin: 0; max-width: 420px; line-height: 1.55; font-size: 13.5px; }
+.btn { height: 34px; padding: 0 16px; border-radius: 7px; background: var(--bg-3); color: var(--fg); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:hover { background: var(--press); }
+.btn.primary { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.1); background: var(--accent); }
+.btn.ghost { background: transparent; color: var(--fg-2); }
+.btn.ghost:hover { background: var(--hover); color: var(--fg); }
+.btn:disabled { opacity: .4; pointer-events: none; }
+
+.plist { display: flex; flex-direction: column; gap: 2px; max-width: 760px; }
+.plist .row { height: 46px; padding: 0 12px; gap: 14px; }
+.plist .row svg { color: var(--fg-2); }
+.plist .row.create { color: var(--fg-3); }
+.plist .row .rmeta { margin-left: auto; }
+.plist-actions { display: flex; gap: 8px; margin-bottom: 14px; }

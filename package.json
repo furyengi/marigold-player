@@ -1,0 +1,129 @@
+{
+  "name": "vlc-redesign",
+  "productName": "VLC Redesign",
+  "version": "0.1.0",
+  "description": "A community redesign of the VLC media player interface, built as a cross-platform desktop app.",
+  "main": "main.js",
+  "author": "furyengi",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "icon": "electron scripts/make-icon.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "music-metadata": "^12.2.0"
+  },
+  "devDependencies": {
+    "electron": "^44.7.1",
+    "electron-builder": "^26.15.3",
+    "@fontsource-variable/inter": "^5.3.0"
+  },
+  "allowScripts": {
+    "electron@44.7.1": true
+  },
+  "build": {
+    "appId": "com.furyengi.vlcredesign",
+    "productName": "VLC Redesign",
+    "copyright": "Copyright © furyengi",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "category": "AudioVideo",
+      "icon": "build/icon.png",
+      "maintainer": "furyengi",
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "assets/**/*",
+      "build/icon.png"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "fileAssociations": [
+      {
+        "ext": [
+          "mp4",
+          "m4v",
+          "mkv",
+          "webm",
+          "mov",
+          "avi",
+          "ogv",
+          "mpg",
+          "mpeg",
+          "mp3",
+          "flac",
+          "wav",
+          "ogg",
+          "oga",
+          "opus",
+          "m4a",
+          "aac"
+        ],
+        "name": "Media file",
+        "role": "Viewer"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/furyengi/vlc-redesign.git"
+  },
+  "homepage": "https://github.com/furyengi/vlc-redesign#readme",
+  "engines": {
+    "node": ">=20"
+  }
+}
