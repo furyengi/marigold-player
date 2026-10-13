@@ -120,6 +120,10 @@
     ],
     "portable": {
       "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
     }
   },
   "repository": {

@@ -10,7 +10,7 @@ Grab the installer for your system from the [latest release](https://github.com/
 
 | System  | File |
 | ------- | ---- |
-| Windows | `VLC Redesign-Setup-x.y.z-x64.exe` (installer) or `VLC Redesign-x.y.z-portable-x64.exe` (no install) |
+| Windows | `VLC-Redesign-Setup-x.y.z-x64.exe` (installer) or `VLC-Redesign-x.y.z-portable-x64.exe` (no install) |
 | macOS   | `.dmg` (Intel and Apple Silicon) |
 | Linux   | `.AppImage` or `.deb` |
 
