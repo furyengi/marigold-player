@@ -37,7 +37,8 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "perMachine": false
+      "perMachine": false,
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
     },
     "mac": {
       "category": "public.app-category.video",
@@ -116,7 +117,10 @@
         "name": "Media file",
         "role": "Viewer"
       }
-    ]
+    ],
+    "portable": {
+      "artifactName": "${productName}-${version}-portable-${arch}.${ext}"
+    }
   },
   "repository": {
     "type": "git",
