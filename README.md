@@ -4,6 +4,13 @@ A calm, orange-accented desktop media player for video and music. It plays almos
 
 > Marigold Player is an independent project. It is not affiliated with or endorsed by VideoLAN or the VLC project. The interface is inspired by a community redesign concept shared on Figma.
 
+<p align="center">
+  <img src="docs/screenshots/02-library-videos.png" width="49%" alt="Video library">
+  <img src="docs/screenshots/03-player-queue.png" width="49%" alt="Player with queue">
+  <img src="docs/screenshots/07-music-player.png" width="49%" alt="Music player with waveform">
+  <img src="docs/screenshots/10-light-player.png" width="49%" alt="Light theme with a teal accent">
+</p>
+
 ## Download
 
 Grab the installer for your system from the [latest release](https://github.com/furyengi/marigold-player/releases/latest):

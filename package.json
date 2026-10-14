@@ -1,7 +1,7 @@
 {
   "name": "marigold-player",
   "productName": "Marigold Player",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A calm, orange-accented desktop media player that plays almost any video or music format. Built with Electron.",
   "main": "main.js",
   "author": "furyengi",

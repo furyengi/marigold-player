@@ -247,7 +247,7 @@ export function initShell() {
   for (const ev of ['volume', 'subs', 'loop', 'record', 'sleep', 'chapters']) P.on(ev, refreshChrome);
 
   store.subscribe((key) => {
-    if (key === 'player') { refreshChrome(); renderQueue(); }
+    if (key === 'player') { applyMode(); }
     if (['audio', 'favorites', 'bookmarks', 'video'].includes(key)) refreshChrome();
     if (key === 'settings') { controls.updateAll(); if (topZone) topZone.update(); }
   });

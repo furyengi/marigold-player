@@ -57,7 +57,7 @@ function parseProbe(text) {
       chapter = null;
       if (type === 'Video') {
         if (/attached pic/.test(rest)) { cur = null; continue; }
-        const dim = /(\d{2,5})x(\d{2,5})/.exec(rest.replace(/0x[0-9a-f]+/gi, ''));
+        const dim = /(\d{2,5})x(\d{2,5})/.exec(rest.replace(/\b0x[0-9a-f]+\b/gi, ''));
         const fps = /([\d.]+) fps/.exec(rest);
         const pix = /\b(yuv\w+|gbr\w+|rgb\w+|nv12|gray\w*|pal8)\b/.exec(rest);
         const profile = /\(([^)]*)\)/.exec(rest);
