@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const engine = require('./engine');
+const updater = require('./updater');
 
 const VIDEO_EXT = new Set(['mp4', 'm4v', 'mkv', 'webm', 'mov', 'avi', 'ogv', 'ts', 'mpg', 'mpeg', 'wmv', 'flv', '3gp', 'vob', 'm2ts', 'mts', 'divx', 'rm', 'rmvb', 'asf', 'f4v', 'ogm', 'm2v', 'mxf', 'wtv', 'mpe', 'dv', 'qt', 'xvid']);
 const AUDIO_EXT = new Set(['mp3', 'flac', 'wav', 'ogg', 'oga', 'opus', 'm4a', 'aac', 'wma', 'aif', 'aiff', 'mka', 'ac3', 'eac3', 'dts', 'ape', 'wv', 'amr', 'mpc', 'caf', 'au', 'm4b', 'tta']);
@@ -185,6 +186,7 @@ if (!gotLock) {
     pendingOpen.push(...mediaFromArgs(process.argv.slice(app.isPackaged ? 1 : 2)));
 
     await startMediaServer();
+    updater.init(() => win);
     createWindow();
     app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
   });
@@ -381,15 +383,3 @@ ipcMain.handle('dialog:save', async (_e, defaultPath) => {
   return r.canceled ? null : r.filePath;
 });
 
-ipcMain.handle('app:checkUpdate', async () => {
-  try {
-    const res = await net.fetch('https://api.github.com/repos/furyengi/marigold-player/releases/latest', { headers: { 'User-Agent': 'marigold-player', Accept: 'application/vnd.github+json' } });
-    if (!res.ok) return null;
-    const j = await res.json();
-    const latest = String(j.tag_name || '').replace(/^v/, '');
-    const num = (v) => v.split('.').map((x) => parseInt(x, 10) || 0);
-    const [a, b] = [num(latest), num(app.getVersion())];
-    const newer = a[0] > b[0] || (a[0] === b[0] && (a[1] > b[1] || (a[1] === b[1] && a[2] > b[2])));
-    return { current: app.getVersion(), latest, newer, url: j.html_url };
-  } catch { return null; }
-});

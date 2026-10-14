@@ -68,7 +68,7 @@ export async function openOnboarding(onDone) {
           h('div.tip', null, ico('plus', 22), 'Drag videos, music or whole folders onto the window to play them.'),
           h('div.tip', null, ico('keyboard', 22), 'Space plays and pauses, F goes fullscreen, F1 lists every shortcut, and you can change them all.'),
           h('div.tip', null, ico('settings', 22), 'Right-click anything for more, and use Settings to tune subtitles, effects and the player layout.')),
-        h('div.set-row', { style: { margin: '0 4px' } }, h('div', null, 'Check for updates automatically', h('span.hint', null, 'Contacts GitHub when the app starts')), toggle(store.s.checkUpdates, (x) => store.update((s) => { s.settings.checkUpdates = x; }, 'settings'))));
+        h('div.set-row', { style: { margin: '0 4px' } }, h('div', null, 'Check for updates automatically', h('span.hint', null, 'Contacts GitHub when the app starts. Nothing else is sent.')), toggle(store.s.checkUpdates, (x) => store.update((s) => { s.settings.checkUpdates = x; }, 'settings'))));
     }
     const dots = h('div.ob-dots', null, [0, 1, 2].map((i) => h('i' + (i === step ? '.on' : ''))));
     foot.append(

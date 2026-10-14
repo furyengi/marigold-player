@@ -83,9 +83,10 @@ export function artGradient(seed) {
 
 // ---------------------------------------------------------------- toast
 
-export function toast(msg, ms = 2600) {
+export function toast(msg, ms = 2600, action = null) {
   const root = $('#toasts');
-  const t = h('div.toast', null, msg);
+  const t = h('div.toast' + (action ? '.action' : ''), null, msg);
+  if (action) t.append(h('button.toast-btn', { onclick: () => { t.remove(); action.onClick(); } }, action.label));
   root.append(t);
   setTimeout(() => t.classList.add('fade'), ms);
   setTimeout(() => t.remove(), ms + 350);

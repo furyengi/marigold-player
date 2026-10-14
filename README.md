@@ -20,6 +20,18 @@ The builds are not code-signed yet, so your OS will warn you the first time:
 - **macOS** – right-click the app → *Open*, or run `xattr -cr "/Applications/Marigold Player.app"` once.
 - **Linux** – `chmod +x` the AppImage and run it.
 
+## Updates
+
+Marigold Player can update itself. Open **Menu → Check for updates** (or Settings → General → Updates): it shows what is new, downloads the new version in the background with a progress bar, and installs it when you press *Restart and install*. A dot on the menu button tells you when an update is waiting, and the app checks quietly at startup (you can turn that off).
+
+| Build | Update |
+| ----- | ------ |
+| Windows installer | In the app |
+| Linux AppImage | In the app |
+| Windows portable, Linux .deb, macOS | Shows the new version and opens the download page (macOS can only install updates in place once the app is code-signed) |
+
+Versions before 0.3.0 have no updater, so install 0.3.0 once by hand.
+
 ## What it plays
 
 Files the browser engine understands (H.264, VP8/VP9, AV1, AAC, MP3, FLAC, Opus, Vorbis, WAV in MP4, WebM, MKV, MOV, Ogg…) play directly. Everything else is handled by a bundled **FFmpeg**, which converts it on the fly while you watch:

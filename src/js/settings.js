@@ -9,6 +9,7 @@ import { ACCENTS } from './brand.js';
 import { h, clear, ico, iconButton, modal, topModal, toggle, segmented, select, range, confirmBox, toast } from './ui.js';
 import { icon } from './icons.js';
 import { addFolderFlow } from './actions.js';
+import { update, openUpdates, onUpdate } from './updates.js';
 
 const row = (label, control, hint) => h('div.set-row', null, h('div', null, label, hint && h('span.hint', null, hint)), h('div.ctl-slot', null, control));
 const set = (k) => (v) => store.update((st) => { st.settings[k] = v; }, 'settings');
@@ -54,8 +55,11 @@ function sections() {
         { title: 'Startup', rows: [
           { label: 'Open on', hint: 'The view shown when the app starts', build: () => select([['home', 'Home'], ['videos', 'Videos'], ['music', 'Music'], ['playlists', 'Playlists'], ['recent', 'Recent']], s.startView, set('startView')) },
           { label: 'Show confirmation dialogs', hint: 'Ask before deleting playlists or clearing data', build: () => toggle(s.confirmDialogs, set('confirmDialogs')) },
-          { label: 'Check for updates automatically', hint: 'Contacts GitHub when the app starts', build: () => toggle(s.checkUpdates, set('checkUpdates')) },
-          { label: 'Check for updates now', build: () => btn('Check', async () => { const r = await window.native.checkUpdate(); toast(!r ? "Couldn't reach the update server" : r.newer ? `Version ${r.latest} is available` : `You're up to date (${r.current})`); }) },
+        ] },
+        { title: 'Updates', rows: [
+          { label: 'Marigold Player', hint: 'The version you are running', build: () => h('span', { style: { color: 'var(--fg-2)' } }, `Version ${update.state.current || ''}`) },
+          { label: 'Check for updates automatically', hint: 'Contacts GitHub when the app starts. Nothing else is sent.', build: () => toggle(s.checkUpdates, set('checkUpdates')) },
+          { label: 'Software update', hint: 'Look for a newer version', build: () => btn(['available', 'ready', 'downloading'].includes(update.state.status) ? 'Update available…' : 'Check for updates', () => openUpdates(), ['available', 'ready'].includes(update.state.status) ? 'primary' : '') },
         ] },
         { title: 'Diagnostics', advanced: true, rows: [
           { label: 'Developer mode', hint: 'F12 opens the developer tools', build: () => toggle(s.devMode, (x) => { set('devMode')(x); syncNative(); }) },

@@ -217,3 +217,10 @@ svg { display: block; flex: none; }
 .mini-view { cursor: grab; }
 .dotted { position: relative; }
 .dotted::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* toast with a button, and the update dot on the menu button */
+.toast.action { pointer-events: auto; display: flex; align-items: center; gap: 14px; padding-right: 8px; }
+.toast-btn { height: 28px; padding: 0 12px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 12.5px; }
+.toast-btn:hover { filter: brightness(1.1); }
+html[data-update='available'] .icon-btn[title='Menu'], html[data-update='ready'] .icon-btn[title='Menu'], html[data-update='downloading'] .icon-btn[title='Menu'] { position: relative; }
+html[data-update='available'] .icon-btn[title='Menu']::after, html[data-update='ready'] .icon-btn[title='Menu']::after, html[data-update='downloading'] .icon-btn[title='Menu']::after { content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--bg-top); }

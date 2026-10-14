@@ -5,6 +5,10 @@ import { player } from './player.js';
 import { h, $, clear, ico, iconButton, showMenu, baseName, stripExt, artGradient } from './ui.js';
 import { icon } from './icons.js';
 import { createControls, createZone } from './controls.js';
+import { bus } from './bus.js';
+import { update as updateInfo } from './updates.js';
+const updateState = () => updateInfo.state;
+const updateAvailable = () => ['available', 'ready', 'downloading'].includes(updateInfo.state.status);
 import { getThumb } from './thumbs.js';
 import { renderView } from './views.js';
 import { addMenu, openFilesDialog, openMediaPaths } from './actions.js';
@@ -45,6 +49,7 @@ export function appMenu(anchor) {
     { label: 'Customize player…', icon: 'sliders', onClick: openCustomize },
     { label: 'Settings', icon: 'settings', kbd: 'Ctrl+,', onClick: () => openSettings() },
     { label: 'Keyboard shortcuts', icon: 'keyboard', kbd: 'F1', onClick: openShortcuts },
+    { label: updateAvailable() ? `Update available (${updateState().latest})` : 'Check for updates…', icon: 'download', onClick: () => bus.openUpdates() },
     { label: 'About', icon: 'info', onClick: openAbout },
     { sep: true },
     { label: 'Quit', icon: 'close', kbd: 'Alt+F4', onClick: () => window.native.win('close') },

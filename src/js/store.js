@@ -29,7 +29,7 @@ const defaults = () => ({
     subColor: '#ffffff',
     defaultRate: 1,
     confirmDialogs: true,
-    checkUpdates: false,
+    checkUpdates: true,
     devMode: false,
     saveLog: false,
     logLevel: 'errors',

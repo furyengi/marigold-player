@@ -10,7 +10,8 @@ import { syncNative } from './settings.js';
 import { actionForEvent } from './hotkeys.js';
 import * as items from './items.js';
 import { bus } from './bus.js';
-import { hasModal, topModal, closeMenu, confirmBox, $ } from './ui.js';
+import { hasModal, topModal, closeMenu, $ } from './ui.js';
+import { initUpdates, openUpdates } from './updates.js';
 
 // ------------------------------------------------------------ appearance
 
@@ -53,6 +54,7 @@ Object.assign(bus, {
   openFiles: openFilesDialog,
   openFolder: async () => { const d = await window.native.pickFolder(); if (d) openMediaPaths([d]); },
   goHome: () => router.go({ view: 'home' }),
+  openUpdates,
   addToPlaylist, newPlaylist,
   snapshot: items.snapshot, pip: items.pip, cycleZoom: items.cycleZoom, rotate: items.rotate,
   toggleFavorite: items.toggleFavorite, addBookmark: items.addBookmark, toggleSleep: items.toggleSleep,
@@ -131,8 +133,4 @@ if (!store.state.onboarded) {
   router.replace({ view: store.s.startView });
 }
 
-if (store.s.checkUpdates) {
-  window.native.checkUpdate().then(async (r) => {
-    if (r && r.newer && await confirmBox('Update available', `Version ${r.latest} is available (you have ${r.current}).`, 'View release')) window.native.external(r.url);
-  });
-}
+initUpdates();

@@ -24,6 +24,10 @@ If you only want the MIT-licensed code, set `compat` off in Settings -> Playback
 [Electron](https://www.electronjs.org/) (MIT) bundles Chromium and its third-party components. The full list of
 licenses is included in the installed app as `LICENSES.chromium.html`.
 
+## electron-updater
+
+[electron-updater](https://www.electron.build/auto-update) — MIT. Downloads and installs new versions from GitHub Releases.
+
 ## music-metadata
 
 [music-metadata](https://github.com/Borewit/music-metadata) — MIT.
