@@ -2,15 +2,24 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <title>VLC Redesign</title>
+  <title>Marigold Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: vlcmedia: http: https:; media-src 'self' blob: vlcmedia: http: https:; connect-src 'self' vlcmedia: http: https:; font-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' blob: http: https:; connect-src 'self' http: https:; font-src 'self'">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/views.css">
   <link rel="stylesheet" href="css/dialogs.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="mg-gamma-filter" color-interpolation-filters="sRGB">
+      <feComponentTransfer id="mg-gamma">
+        <feFuncR type="gamma" amplitude="1" exponent="1" offset="0"/>
+        <feFuncG type="gamma" amplitude="1" exponent="1" offset="0"/>
+        <feFuncB type="gamma" amplitude="1" exponent="1" offset="0"/>
+      </feComponentTransfer>
+    </filter>
+  </svg>
   <div id="app" class="mode-library">
     <header id="topbar"></header>
     <div id="body">

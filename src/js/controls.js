@@ -1,9 +1,8 @@
 import { store } from './store.js';
+import { buildItem } from './items.js';
 import * as P from './player.js';
 import { player } from './player.js';
 import { h, clear, fmtTime, clamp } from './ui.js';
-import { icon, skipIcon } from './icons.js';
-import { EXTRAS } from './extras.js';
 
 // ------------------------------------------------------------ seek bar
 
@@ -77,100 +76,67 @@ function createSeek() {
   };
 }
 
-// ------------------------------------------------------------ volume
+// ------------------------------------------------------------ item zones
 
-function createVolume() {
-  const icoBtn = h('button.ctl', { title: 'Mute (M)', onclick: () => P.toggleMute() });
-  const fillWrap = h('div.vol-fill-wrap', null, h('div.vol-fill'));
-  const track = h('div.vol-track', { role: 'slider', 'aria-label': 'Volume' }, h('div.vol-shape'), fillWrap);
-  const set = (e) => {
-    const r = track.getBoundingClientRect();
-    P.setVolume(clamp((e.clientX - r.left) / r.width, 0, 1));
+/** A row of customizable items (control bar halves, top bar). `getIds` returns the ids to show right now. */
+export function createZone(el, getIds) {
+  let built = [];
+  let sig = '';
+  const rebuild = () => {
+    clear(el);
+    built = [];
+    for (const id of getIds()) {
+      const b = buildItem(id);
+      if (!b) continue;
+      el.append(b.el);
+      built.push(b);
+    }
   };
-  let drag = false;
-  track.addEventListener('pointerdown', (e) => { drag = true; track.setPointerCapture(e.pointerId); set(e); });
-  track.addEventListener('pointermove', (e) => { if (drag) set(e); });
-  track.addEventListener('pointerup', () => { drag = false; });
-  const el = h('div.vol', null, icoBtn, track);
   return {
     el,
+    /** Rebuild when the id list changed, otherwise just refresh button states. */
     update() {
-      const v = player.volume;
-      icoBtn.innerHTML = icon(v === 0 ? 'volumeMute' : v < 0.5 ? 'volumeLow' : 'volume', 20);
-      fillWrap.style.width = v * 100 + '%';
-      track.title = `${Math.round(v * 100)}%`;
+      const ids = getIds().join();
+      if (ids !== sig) { sig = ids; rebuild(); }
+      built.forEach((b) => b.refresh());
     },
   };
 }
 
 // ------------------------------------------------------------ the bar
 
-export function createControls({ onEffects, onSubtitles, onSettings, onQueue }) {
+export function createControls() {
   const root = document.getElementById('controls');
   const seek = createSeek();
-  const vol = createVolume();
   const cur = h('span.time', null, '00:00:00');
   const dur = h('span.time', null, '00:00:00');
-  const prevBtn = h('button.ctl', { title: 'Previous (P)', html: icon('prev', 20), onclick: () => P.prev() });
-  const nextBtn = h('button.ctl', { title: 'Next (N)', html: icon('next', 20), onclick: () => P.next() });
-  const playBtn = h('button.ctl-play', { title: 'Play / Pause (Space)', onclick: () => P.toggle() });
-  const backBtn = h('button.ctl', { title: 'Skip back', onclick: () => P.seekBy(-store.s.skipStep) });
-  const fwdBtn = h('button.ctl', { title: 'Skip forward', onclick: () => P.seekBy(store.s.skipStep) });
-  const transport = h('div.ctl-group');
-  const extras = h('div.ctl-group');
-  const fxBtn = h('button.ctl', { title: 'Effects & equalizer', html: icon('equalizer', 20), onclick: (e) => onEffects(e.currentTarget) });
-  const subBtn = h('button.ctl', { title: 'Subtitles', html: icon('subtitles', 20), onclick: (e) => onSubtitles(e.currentTarget) });
-  const setBtn = h('button.ctl', { title: 'Settings (Ctrl+,)', html: icon('settings', 20), onclick: onSettings });
-  const queueBtn = h('button.ctl', { title: 'Queue', html: icon('queue', 20), onclick: onQueue });
-  const right = h('div.ctl-group', null, fxBtn, subBtn, setBtn, queueBtn);
 
-  root.append(transport, cur, seek.el, dur, extras, vol.el, right);
-
-  let isAudio = null;
-  function layoutTransport() {
-    const audio = player.kind === 'audio';
-    if (audio === isAudio) return;
-    isAudio = audio;
-    clear(transport);
-    backBtn.innerHTML = skipIcon(-1, store.s.skipStep);
-    fwdBtn.innerHTML = skipIcon(1, store.s.skipStep);
-    transport.append(prevBtn, ...(audio ? [backBtn] : []), playBtn, ...(audio ? [fwdBtn] : []), nextBtn);
-    seek.setWave(audio);
-    renderExtras();
-  }
-
-  function renderExtras() {
-    clear(extras);
-    const chosen = store.state.player.controls;
-    for (const x of EXTRAS) {
-      if (!chosen.includes(x.id)) continue;
-      if (isAudio && (x.id === 'skipBack' || x.id === 'skipFwd')) continue; // already beside play
-      const b = h('button.ctl' + (x.active && x.active() ? '.on' : ''), { title: x.label, html: x.icon(), onclick: (e) => { x.run(e.currentTarget); setTimeout(updateAll, 0); } });
-      extras.append(b);
+  const idsFor = (zone) => () => {
+    const ids = [...store.state.player.layout[zone]];
+    // Music mode keeps skip buttons next to play, as in the design.
+    if (zone === 'left' && player.kind === 'audio') {
+      const i = ids.indexOf('play');
+      if (i >= 0 && !ids.some((x) => ['skipBack', 'skipFwd', 'back10', 'fwd10', 'back15', 'fwd15'].includes(x))) ids.splice(i, 1, 'skipBack', 'play', 'skipFwd');
     }
-  }
+    return ids;
+  };
+  const left = createZone(h('div.ctl-group'), idsFor('left'));
+  const right = createZone(h('div.ctl-group'), idsFor('right'));
+  root.append(left.el, cur, seek.el, dur, right.el);
 
+  let wasAudio = null;
   function updateState() {
-    layoutTransport();
-    playBtn.innerHTML = icon(player.playing ? 'pause' : 'play', 20);
-    const none = !player.current;
-    playBtn.disabled = none;
-    backBtn.disabled = fwdBtn.disabled = none;
-    prevBtn.disabled = none || (player.queue.length < 2 && player.time < 3);
-    nextBtn.disabled = none || (player.order.indexOf(player.index) >= player.order.length - 1 && player.repeat !== 'all');
-    subBtn.classList.toggle('on', player.subIndex >= 0);
-    subBtn.hidden = player.kind === 'audio';
-    renderExtras();
+    const audio = player.kind === 'audio';
+    if (audio !== wasAudio) { wasAudio = audio; seek.setWave(audio); }
+    left.update();
+    right.update();
   }
-
   function updateTime() {
     cur.textContent = fmtTime(player.time);
     dur.textContent = fmtTime(player.duration);
     seek.update();
   }
+  function updateAll() { updateState(); updateTime(); }
 
-  function updateAll() { updateState(); updateTime(); vol.update(); }
-
-  return { updateState, updateTime, updateVolume: () => vol.update(), updateAll, renderExtras, redrawSeek: () => seek.update() };
+  return { updateState, updateTime, updateVolume: updateState, updateAll, renderExtras: updateState, redrawSeek: () => seek.update() };
 }
-

@@ -1,4 +1,5 @@
 import { icon } from './icons.js';
+import { store } from './store.js';
 
 /** Tiny hyperscript helper: h('div.card', { onclick }, child, 'text') */
 export function h(tag, props, ...kids) {
@@ -209,7 +210,9 @@ export function range({ min, max, step = 1, value, onInput, cls = '' }) {
   return h('input.range' + (cls ? '.' + cls : ''), { type: 'range', min, max, step, value, oninput: (e) => onInput(Number(e.target.value)) });
 }
 
-export const confirmBox = (title, text, okLabel = 'OK', danger = false) => new Promise((resolve) => {
+export const confirmBox = (title, text, okLabel = 'OK', danger = false, always = false) => new Promise((resolve) => {
+  // Users can turn confirmations off for routine actions; irreversible resets always ask.
+  if (!always && danger && store.s.confirmDialogs === false) { resolve(true); return; }
   let done = false;
   const finish = (v) => { if (!done) { done = true; m.close(); resolve(v); } };
   const m = modal({

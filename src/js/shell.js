@@ -4,7 +4,7 @@ import * as P from './player.js';
 import { player } from './player.js';
 import { h, $, clear, ico, iconButton, showMenu, baseName, stripExt, artGradient } from './ui.js';
 import { icon } from './icons.js';
-import { createControls } from './controls.js';
+import { createControls, createZone } from './controls.js';
 import { getThumb } from './thumbs.js';
 import { renderView } from './views.js';
 import { addMenu, openFilesDialog, openMediaPaths } from './actions.js';
@@ -20,6 +20,8 @@ const mini = $('#mini');
 
 let winState = { maximized: false, fullscreen: false };
 let controls;
+let hideUi = false;
+export function toggleHideUi() { hideUi = !hideUi; applyMode(); }
 
 export const isPlayerView = () => router.route.view === 'player';
 
@@ -34,10 +36,10 @@ const NAV = [
   ['recent', 'Recent', 'history'],
 ];
 
-function appMenu(anchor) {
+export function appMenu(anchor) {
   showMenu(anchor, [
     { label: 'Open files…', icon: 'play', kbd: 'Ctrl+O', onClick: openFilesDialog },
-    { label: 'Open folder…', icon: 'folder', kbd: 'Ctrl+Shift+O', onClick: async () => { const d = await window.vlc.pickFolder(); if (d) openMediaPaths([d]); } },
+    { label: 'Open folder…', icon: 'folder', kbd: 'Ctrl+Shift+O', onClick: async () => { const d = await window.native.pickFolder(); if (d) openMediaPaths([d]); } },
     { label: 'Open network stream…', icon: 'network', kbd: 'Ctrl+N', onClick: openNetwork },
     { sep: true },
     { label: 'Customize player…', icon: 'sliders', onClick: openCustomize },
@@ -45,40 +47,40 @@ function appMenu(anchor) {
     { label: 'Keyboard shortcuts', icon: 'keyboard', kbd: 'F1', onClick: openShortcuts },
     { label: 'About', icon: 'info', onClick: openAbout },
     { sep: true },
-    { label: 'Quit', icon: 'close', kbd: 'Alt+F4', onClick: () => window.vlc.win('close') },
+    { label: 'Quit', icon: 'close', kbd: 'Alt+F4', onClick: () => window.native.win('close') },
   ]);
 }
+
+let topZone = null;
+const topIds = () => store.state.player.layout.top;
 
 function renderTopbar() {
   const playerMode = isPlayerView();
   const it = player.current;
-  const left = h('div.tb-left', null,
-    h('div.tb-logo', null, h('img', { src: '../assets/cone.svg', alt: '' })),
-    iconButton('dots', { title: 'Menu', onclick: (e) => appMenu(e.currentTarget) }),
-  );
+  const left = h('div.tb-left', null, h('div.tb-logo', null, h('img', { src: '../assets/logo.svg', alt: '' })));
   if (playerMode) {
-    left.append(iconButton('sidebar', { title: 'Queue', cls: store.state.player.sidebar ? 'on' : '', onclick: toggleQueue }), h('div.tb-sep'));
-    if (it && it.folder) {
-      left.append(h('button.chip', { title: it.folder, onclick: () => router.go({ view: it.kind === 'audio' ? 'music' : 'videos', dir: it.folder }) }, ico('folder', 20), h('span', null, baseName(it.folder))));
-    } else if (it && it.remote) {
-      left.append(h('div.chip', null, ico('network', 20), h('span', null, 'Network')));
-    }
+    topZone = createZone(h('div.ctl-group.top-zone'), topIds);
+    left.append(topZone.el);
+    topZone.update();
+  } else {
+    topZone = null;
+    left.append(iconButton('dots', { title: 'Menu', onclick: (e) => appMenu(e.currentTarget) }));
   }
-  const title = h('div.tb-title', null, it ? it.title || stripExt(it.name) : 'VLC Redesign');
+  const title = h('div.tb-title', null, it ? it.title || stripExt(it.name) : 'Marigold Player');
   const right = h('div.tb-right', null,
-    iconButton('minimize', { title: 'Minimize', cls: 'win', onclick: () => window.vlc.win('minimize') }),
-    iconButton(winState.maximized ? 'restore' : 'maximize', { title: winState.maximized ? 'Restore' : 'Maximize', cls: 'win', onclick: () => window.vlc.win('maximize') }),
-    iconButton(winState.fullscreen ? 'exitFullscreen' : 'fullscreen', { title: 'Fullscreen (F)', cls: 'win', onclick: () => window.vlc.win('fullscreen') }),
-    iconButton('close', { title: 'Close', cls: 'win close', onclick: () => window.vlc.win('close') }),
+    iconButton('minimize', { title: 'Minimize', cls: 'win', onclick: () => window.native.win('minimize') }),
+    iconButton(winState.maximized ? 'restore' : 'maximize', { title: winState.maximized ? 'Restore' : 'Maximize', cls: 'win', onclick: () => window.native.win('maximize') }),
+    iconButton(winState.fullscreen ? 'exitFullscreen' : 'fullscreen', { title: 'Fullscreen', cls: 'win', onclick: () => window.native.win('fullscreen') }),
+    iconButton('close', { title: 'Close', cls: 'win close', onclick: () => window.native.win('close') }),
   );
   clear(topbar).append(left, title, right);
-  topbar.ondblclick = (e) => { if (e.target === topbar || e.target.classList.contains('tb-title')) window.vlc.win('maximize'); };
+  topbar.ondblclick = (e) => { if (e.target === topbar || e.target.classList.contains('tb-title')) window.native.win('maximize'); };
 }
 
 // ------------------------------------------------------------ nav
 
 function renderNav() {
-  const cur = router.route.view === 'playlist' ? 'playlists' : router.route.view;
+  const cur = ['playlist', 'favorites'].includes(router.route.view) ? 'playlists' : router.route.view;
   clear(nav);
   for (const [view, label, ic] of NAV) {
     nav.append(h('button.nav-item' + (cur === view ? '.active' : ''), { title: label, onclick: () => router.go({ view }) }, ico(ic, 20), h('span', null, label)));
@@ -89,8 +91,13 @@ function renderNav() {
 
 // ------------------------------------------------------------ queue panel
 
-function toggleQueue() {
-  store.update((s) => { s.player.sidebar = !s.player.sidebar; }, 'player');
+export function toggleQueue(side) {
+  store.update((s) => {
+    const p = s.player;
+    if (side && p.sidebar && p.sidebarSide !== side) { p.sidebarSide = side; return; }
+    if (side) p.sidebarSide = side;
+    p.sidebar = !p.sidebar;
+  }, 'player');
   applyMode();
 }
 
@@ -188,6 +195,8 @@ export function applyMode() {
   viewRoot.hidden = playerMode;
   $('#controls').hidden = !playerMode;
   queuePanel.hidden = !(playerMode && store.state.player.sidebar && !winState.fullscreen);
+  $('#body').classList.toggle('queue-right', store.state.player.sidebarSide === 'right');
+  app.classList.toggle('hide-ui', hideUi && playerMode);
   if (playerMode) { stage.prepend(player.slot); player.slot.after($('#stageArt')); }
   renderTopbar();
   renderNav();
@@ -209,12 +218,7 @@ function syncPlaying() { if (player.playing && !raf) raf = requestAnimationFrame
 // ------------------------------------------------------------ init
 
 export function initShell() {
-  controls = createControls({
-    onEffects: (a) => openEffects(a),
-    onSubtitles: (a) => openSubtitleMenu(a),
-    onSettings: () => openSettings(),
-    onQueue: toggleQueue,
-  });
+  controls = createControls();
 
   router.subscribe((route) => {
     if (route.view === 'player' && !player.current) { router.replace({ view: 'home' }); return; }
@@ -222,27 +226,28 @@ export function initShell() {
     if (route.view !== 'player') renderView(viewRoot, route);
   });
 
+  const refreshChrome = () => { controls.updateState(); if (topZone) topZone.update(); };
+
   P.on('item', () => {
-    window.vlc.win('title', player.current ? player.current.title || player.current.name : 'VLC Redesign');
+    window.native.win('title', player.current ? player.current.title || player.current.name : 'Marigold Player');
     renderTopbar(); renderStage(); renderMini(); renderQueue();
     if (!player.current && isPlayerView()) router.go({ view: 'home' });
     if (isPlayerView()) controls.updateAll();
   });
   P.on('meta', () => { renderStage(); renderMini(); renderTopbar(); });
   P.on('peaks', () => controls.redrawSeek());
-  P.on('queue', () => { renderQueue(); controls.updateState(); });
-  P.on('state', () => { controls.updateState(); renderMini(); syncPlaying(); renderStage(); });
+  P.on('queue', () => { renderQueue(); refreshChrome(); });
+  P.on('state', () => { refreshChrome(); renderMini(); syncPlaying(); renderStage(); });
   P.on('time', () => { if (isPlayerView()) controls.updateTime(); else updateMiniBar(); });
-  P.on('volume', () => controls.updateVolume());
-  P.on('subs', () => controls.updateState());
+  for (const ev of ['volume', 'subs', 'loop', 'record', 'sleep', 'chapters']) P.on(ev, refreshChrome);
 
   store.subscribe((key) => {
-    if (key === 'player') { controls.renderExtras(); renderQueue(); }
-    if (key === 'audio') controls.updateVolume();
-    if (key === 'settings') controls.updateAll();
+    if (key === 'player') { refreshChrome(); renderQueue(); }
+    if (['audio', 'favorites', 'bookmarks', 'video'].includes(key)) refreshChrome();
+    if (key === 'settings') { controls.updateAll(); if (topZone) topZone.update(); }
   });
 
-  window.vlc.onWinState((s) => { winState = s; applyMode(); wake(); });
+  window.native.onWinState((s) => { winState = s; applyMode(); wake(); });
   window.addEventListener('resize', () => controls.redrawSeek());
 
   // stage interactions
@@ -252,8 +257,13 @@ export function initShell() {
     clearTimeout(clickTimer);
     clickTimer = setTimeout(() => P.toggle(), 220);
   });
-  stage.addEventListener('dblclick', () => { clearTimeout(clickTimer); window.vlc.win('fullscreen'); });
-  stage.addEventListener('wheel', (e) => { if (store.s.wheelVolume) P.setVolume(player.volume + (e.deltaY < 0 ? 0.05 : -0.05)); }, { passive: true });
+  stage.addEventListener('dblclick', () => { clearTimeout(clickTimer); window.native.win('fullscreen'); });
+  stage.addEventListener('wheel', (e) => {
+    const act = store.s.wheelAction;
+    const up = e.deltaY < 0;
+    if (act === 'volume') P.setVolume(player.volume + (up ? 0.05 : -0.05));
+    else if (act === 'seek' && player.current) P.seekBy(up ? store.s.skipStep : -store.s.skipStep);
+  }, { passive: true });
 
   // hide the chrome after a pause in fullscreen
   let idleTimer = 0;
@@ -263,6 +273,8 @@ export function initShell() {
     if (winState.fullscreen && isPlayerView()) idleTimer = setTimeout(() => { if (!document.querySelector('.popover, .fx')) app.classList.add('idle'); }, store.s.idleHide * 1000);
   }
   for (const ev of ['mousemove', 'keydown', 'pointerdown']) window.addEventListener(ev, wake, true);
+  // With the interface hidden (H), moving to the top or bottom edge brings it back temporarily.
+  window.addEventListener('mousemove', (e) => { app.classList.toggle('reveal', e.clientY < 56 || e.clientY > innerHeight - 76); }, true);
 
   applyMode();
   renderView(viewRoot, router.route);

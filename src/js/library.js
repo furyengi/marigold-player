@@ -1,12 +1,13 @@
 import { store, uid } from './store.js';
 import { collator, baseName } from './ui.js';
+import { knownDuration } from './thumbs.js';
 
 const dirCache = new Map();
 
 export async function listDir(dir) {
   const hit = dirCache.get(dir);
   if (hit && Date.now() - hit.t < 4000) return hit.v;
-  const v = await window.vlc.list(dir);
+  const v = await window.native.list(dir, store.s.showHidden);
   dirCache.set(dir, { t: Date.now(), v });
   return v;
 }
@@ -49,11 +50,15 @@ export function addFolder(path, kind) {
 }
 export function removeFolder(id) { store.update((s) => { s.folders = s.folders.filter((f) => f.id !== id); }, 'folders'); }
 
+const playedRank = (e) => { const i = store.state.recent.findIndex((r) => r.path === e.path); return i < 0 ? 1e9 : i; };
+
 export function sortEntries(entries, { key, dir }) {
   const by = {
     name: (a, b) => collator.compare(a.name, b.name),
     mtime: (a, b) => a.mtime - b.mtime,
     size: (a, b) => (a.size || 0) - (b.size || 0),
+    duration: (a, b) => (knownDuration(a.path) || 0) - (knownDuration(b.path) || 0),
+    played: (a, b) => playedRank(a) - playedRank(b),
   }[key] || ((a, b) => collator.compare(a.name, b.name));
   return entries.slice().sort((a, b) => {
     if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;

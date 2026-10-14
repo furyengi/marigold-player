@@ -190,3 +190,30 @@ svg { display: block; flex: none; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 
 #dropHint { position: fixed; inset: 10px; border: 2px dashed var(--accent); border-radius: 14px; background: color-mix(in srgb, var(--accent) 12%, rgba(0, 0, 0, .6)); display: grid; place-items: center; font-size: 20px; z-index: 90; pointer-events: none; color: #fff; }
+
+/* customizable items */
+.top-zone { display: flex; align-items: center; gap: 2px; }
+.top-zone .ctl { width: 30px; height: 28px; }
+.ctl-text { color: var(--fg-2); font-size: 13px; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
+.ctl-spacer { display: inline-block; width: 24px; flex: none; }
+.ctl-thumb { width: 36px; height: 36px; border-radius: 6px; background: var(--bg-deep) center/cover no-repeat; flex: none; }
+.ctl.rec, .ctl.rec.on { color: #ff5a4a; }
+.ctl.rec svg { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+#body.queue-right #nav { order: 0; }
+#body.queue-right #main { order: 1; }
+#body.queue-right #queuePanel { order: 2; border-right: 0; border-left: 1px solid var(--line); }
+.hide-ui #topbar, .hide-ui #controls { position: absolute; left: 0; right: 0; opacity: 0; transition: opacity .2s; }
+.hide-ui #topbar { top: 0; }
+.hide-ui #controls { bottom: 0; }
+.hide-ui.reveal #topbar, .hide-ui.reveal #controls { opacity: 1; background: color-mix(in srgb, var(--bg-top) 85%, transparent); backdrop-filter: blur(20px); }
+.hide-ui #nav { display: none; }
+.hide-ui #main { margin: 0; }
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; }
+
+/* mini player corner */
+#mini[data-side='left'] { right: auto; left: 18px; }
+.mode-library #mini[data-side='left'] { left: 226px; }
+.mini-view { cursor: grab; }
+.dotted { position: relative; }
+.dotted::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }

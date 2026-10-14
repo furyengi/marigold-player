@@ -1,8 +1,8 @@
 {
-  "name": "vlc-redesign",
-  "productName": "VLC Redesign",
-  "version": "0.1.0",
-  "description": "A community redesign of the VLC media player interface, built as a cross-platform desktop app.",
+  "name": "marigold-player",
+  "productName": "Marigold Player",
+  "version": "0.2.0",
+  "description": "A calm, orange-accented desktop media player that plays almost any video or music format. Built with Electron.",
   "main": "main.js",
   "author": "furyengi",
   "license": "MIT",
@@ -12,22 +12,25 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist:linux": "electron-builder --linux",
+    "dist:ci": "node scripts/ci-build.js never"
   },
   "dependencies": {
+    "ffmpeg-static": "^5.3.0",
     "music-metadata": "^12.2.0"
   },
   "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
     "electron": "^44.7.1",
-    "electron-builder": "^26.15.3",
-    "@fontsource-variable/inter": "^5.3.0"
+    "electron-builder": "^26.15.3"
   },
   "allowScripts": {
-    "electron@44.7.1": true
+    "electron@44.7.1": true,
+    "ffmpeg-static@5.3.0": true
   },
   "build": {
-    "appId": "com.furyengi.vlcredesign",
-    "productName": "VLC Redesign",
+    "appId": "com.furyengi.marigold",
+    "productName": "Marigold Player",
     "copyright": "Copyright © furyengi",
     "directories": {
       "output": "dist",
@@ -71,6 +74,7 @@
     },
     "files": [
       "main.js",
+      "engine.js",
       "preload.js",
       "src/**/*",
       "assets/**/*",
@@ -124,13 +128,22 @@
     "publish": {
       "provider": "github",
       "releaseType": "release"
-    }
+    },
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ],
+    "extraResources": [
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      }
+    ]
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/furyengi/vlc-redesign.git"
+    "url": "git+https://github.com/furyengi/marigold-player.git"
   },
-  "homepage": "https://github.com/furyengi/vlc-redesign#readme",
+  "homepage": "https://github.com/furyengi/marigold-player#readme",
   "engines": {
     "node": ">=20"
   }

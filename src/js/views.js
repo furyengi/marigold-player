@@ -1,6 +1,7 @@
 import { store } from './store.js';
 import { router } from './router.js';
 import { h, clear, ico, iconButton, showMenu, fmtShort, fmtSize, baseName, stripExt, artGradient } from './ui.js';
+import { bus } from './bus.js';
 import { icon } from './icons.js';
 import { listDir, sortEntries, foldersFor, rootFor, crumbsFor, progressOf } from './library.js';
 import { getThumb, knownDuration } from './thumbs.js';
@@ -9,7 +10,8 @@ import * as P from './player.js';
 import { playEntries, fileMenu, folderMenu, addMenu, addFolderFlow, openFilesDialog, newPlaylist, playPlaylist, deletePlaylist, renamePlaylist } from './actions.js';
 import { openNetwork } from './dialogs.js';
 
-const TITLES = { videos: 'Videos', music: 'Music', home: 'Home', network: 'Network', playlists: 'Playlists', recent: 'Recent', playlist: 'Playlist' };
+const TITLES = { videos: 'Videos', music: 'Music', home: 'Home', network: 'Network', playlists: 'Playlists', recent: 'Recent', playlist: 'Playlist', favorites: 'Favorites' };
+const dispName = (e) => (store.s.showExt ? e.name : stripExt(e.name));
 const KIND = { videos: 'video', music: 'audio' };
 
 let io = null; // lazy thumbnail observer for the current view
@@ -73,17 +75,37 @@ function viewHead({ crumbs, title, count, tools = [], showNav = true }) {
   return el;
 }
 
+const isDefaultSort = () => { const s = store.state.ui.sort; return s.key === 'name' && s.dir === 1; };
+
 const sortMenu = (anchor, rerender) => {
   const cur = store.state.ui.sort;
   const set = (key, dir) => { store.update((s) => { s.ui.sort = { key, dir }; }, 'ui'); rerender(); };
+  const keys = [['name', 'Name'], ['mtime', 'Date modified'], ['size', 'Size'], ['duration', 'Duration'], ['played', 'Last played']];
   showMenu(anchor, [
     { heading: 'Sort by' },
-    { label: 'Name', checked: cur.key === 'name', onClick: () => set('name', cur.dir) },
-    { label: 'Date modified', checked: cur.key === 'mtime', onClick: () => set('mtime', cur.dir) },
-    { label: 'Size', checked: cur.key === 'size', onClick: () => set('size', cur.dir) },
+    ...keys.map(([k, label]) => ({ label, checked: cur.key === k, onClick: () => set(k, cur.dir) })),
     { sep: true },
     { label: 'Ascending', checked: cur.dir === 1, onClick: () => set(cur.key, 1) },
     { label: 'Descending', checked: cur.dir === -1, onClick: () => set(cur.key, -1) },
+    !isDefaultSort() && { sep: true },
+    !isDefaultSort() && { label: 'Reset sorting', icon: 'refresh', onClick: () => set('name', 1) },
+  ], { align: 'end' });
+};
+
+const viewMenu = (anchor, layoutKey, rerender) => {
+  const cur = store.state.ui.layout[layoutKey] || 'grid';
+  const setLayout = (l) => { store.update((s) => { s.ui.layout[layoutKey] = l; }, 'ui'); rerender(); };
+  const size = store.s.thumbSize;
+  const setSize = (x) => store.update((s) => { s.settings.thumbSize = x; }, 'settings');
+  showMenu(anchor, [
+    { heading: 'View' },
+    { label: 'Thumbnails', icon: 'grid', checked: cur === 'grid', onClick: () => setLayout('grid') },
+    { label: 'List', icon: 'listview', checked: cur === 'list', onClick: () => setLayout('list') },
+    { sep: true },
+    { heading: 'Thumbnail size' },
+    { label: 'Small', checked: size === 's', onClick: () => setSize('s') },
+    { label: 'Medium', checked: size === 'm', onClick: () => setSize('m') },
+    { label: 'Large', checked: size === 'l', onClick: () => setSize('l') },
   ], { align: 'end' });
 };
 
@@ -95,7 +117,7 @@ function searchBox(onInput) {
 }
 
 function emptyState({ title, text, actions = [] }) {
-  return h('div.empty', null, h('img', { src: '../assets/idle.png', alt: '' }), h('h3', null, title), h('p', null, text), h('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' } }, actions));
+  return h('div.empty', null, h('img', { src: '../assets/logo.svg', alt: '' }), h('h3', null, title), h('p', null, text), h('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' } }, actions));
 }
 
 // ------------------------------------------------------------ browse (videos / music / folders)
@@ -111,9 +133,9 @@ async function renderBrowse(root, route) {
 
   const body = h('div.view-body');
   const io2 = observer(body);
-  const layoutBtn = h('button.icon-btn', { title: 'Change layout' });
+  const layoutBtn = h('button.icon-btn', { title: 'View options' });
   const countEl = h('span.count');
-  const sortBtn = h('button.icon-btn', { title: 'Sort' }, ico('sort', 20));
+  const sortBtn = h('button.icon-btn.dotted-host', { title: 'Sort' }, ico('sort', 20));
   const { box } = searchBox((q) => { query = q; draw(); });
 
   const rerender = () => draw();
@@ -121,13 +143,9 @@ async function renderBrowse(root, route) {
     const cur = store.state.ui.layout[layoutKey] || 'grid';
     layoutBtn.innerHTML = icon(cur === 'grid' ? 'listview' : 'grid', 20);
   };
-  layoutBtn.onclick = () => {
-    const cur = store.state.ui.layout[layoutKey] || 'grid';
-    store.update((s) => { s.ui.layout[layoutKey] = cur === 'grid' ? 'list' : 'grid'; }, 'ui');
-    setLayout();
-    draw();
-  };
-  sortBtn.onclick = () => sortMenu(sortBtn, rerender);
+  layoutBtn.onclick = () => viewMenu(layoutBtn, layoutKey, () => { setLayout(); draw(); });
+  sortBtn.onclick = () => sortMenu(sortBtn, () => { sortBtn.classList.toggle('dotted', !isDefaultSort()); rerender(); });
+  sortBtn.classList.toggle('dotted', !isDefaultSort());
   setLayout();
 
   const crumbs = dir
@@ -167,11 +185,11 @@ async function renderBrowse(root, route) {
       let node;
       if (layout === 'grid') {
         const t = e.type === 'dir' ? h('div.thumb.folder', { html: icon('folder', 34, 'class="big"') }) : thumb(e, 'thumb', { duration: true });
-        node = h('button.card' + (isCur ? '.current' : '') + (watched ? '.watched' : ''), { onclick: open, oncontextmenu: menu, title: e.name }, t, h('div.name', null, e.name));
+        node = h('button.card' + (isCur ? '.current' : '') + (watched ? '.watched' : ''), { onclick: open, oncontextmenu: menu, title: e.name }, t, h('div.name', null, dispName(e)));
         if (e.type === 'file') io2.observe(t);
       } else {
         const t = e.type === 'dir' ? h('div.rthumb', { html: icon('folder', 22) }) : thumb(e, 'rthumb', { glyph: 16 });
-        node = h('button.row' + (e.type === 'dir' ? '.folder' : '') + (isCur ? '.current' : '') + (watched ? '.watched' : ''), { onclick: open, oncontextmenu: menu, title: e.name }, t, h('span.rname', null, e.name), e.type === 'file' && h('span.rmeta', null, fmtSize(e.size)));
+        node = h('button.row' + (e.type === 'dir' ? '.folder' : '') + (isCur ? '.current' : '') + (watched ? '.watched' : ''), { onclick: open, oncontextmenu: menu, title: e.name }, t, h('span.rname', null, dispName(e)), e.type === 'file' && h('span.rmeta', null, fmtSize(e.size)));
         if (e.type === 'file') io2.observe(t);
       }
       wrap.append(node);
@@ -270,7 +288,7 @@ function renderHome(root) {
   }
   if (!body.children.length) {
     body.append(emptyState({
-      title: 'Welcome to VLC Redesign',
+      title: 'Welcome to Marigold Player',
       text: 'Add a folder of videos or music, or just drop files here to start playing.',
       actions: [
         h('button.btn.primary', { onclick: () => addFolderFlow('video') }, 'Add video folder'),
@@ -346,11 +364,12 @@ function renderPlaylists(root) {
   const pls = store.state.playlists;
   root.append(viewHead({ title: 'Playlists', count: `${pls.length} item${pls.length === 1 ? '' : 's'}` }), body);
   const list = h('div.plist');
+  list.append(h('button.row', { onclick: () => router.go({ view: 'favorites' }) }, ico('heart', 20), h('span.rname', null, 'Favorites'), h('span.rmeta', null, `${store.state.favorites.length} item${store.state.favorites.length === 1 ? '' : 's'}`)));
   list.append(h('button.row.create', { onclick: async () => { const p = await newPlaylist(); if (p) router.go({ view: 'playlist', id: p.id }); } }, ico('plus', 20), h('span.rname', null, 'Create playlist')));
   for (const p of pls) {
     list.append(h('button.row', {
       onclick: () => router.go({ view: 'playlist', id: p.id }),
-      oncontextmenu: (ev) => { ev.preventDefault(); showMenu({ x: ev.clientX, y: ev.clientY }, [{ label: 'Play', icon: 'play', onClick: () => playPlaylist(p.id), disabled: !p.items.length }, { label: 'Rename', icon: 'edit', onClick: () => renamePlaylist(p.id) }, { label: 'Delete', icon: 'trash', danger: true, onClick: () => deletePlaylist(p.id) }]); },
+      oncontextmenu: (ev) => { ev.preventDefault(); showMenu({ x: ev.clientX, y: ev.clientY }, [{ label: 'Play', icon: 'play', onClick: () => playPlaylist(p.id), disabled: !p.items.length }, { label: 'Add subtitles…', icon: 'subtitles', disabled: !p.items.length, onClick: () => bus.openAddSubtitles({ title: `Add subtitles to ${p.name}`, items: p.items.filter((x) => x.path) }) }, { label: 'Rename', icon: 'edit', onClick: () => renamePlaylist(p.id) }, { label: 'Delete', icon: 'trash', danger: true, onClick: () => deletePlaylist(p.id) }]); },
     }, ico('playlist', 20), h('span.rname', null, p.name), h('span.rmeta', null, `${p.items.length} item${p.items.length === 1 ? '' : 's'}`)));
   }
   body.append(list);
@@ -363,6 +382,7 @@ function renderPlaylist(root, route) {
   const io2 = observer(body);
   const tools = [
     h('button.btn.primary', { disabled: !p.items.length, onclick: () => playPlaylist(p.id) }, ico('play', 16), 'Play'),
+    iconButton('subtitles', { title: 'Add subtitles to this playlist', onclick: () => bus.openAddSubtitles({ title: `Add subtitles to ${p.name}`, items: p.items.filter((x) => x.path) }) }),
     iconButton('edit', { title: 'Rename', onclick: () => renamePlaylist(p.id) }),
     iconButton('trash', { title: 'Delete playlist', onclick: () => deletePlaylist(p.id) }),
   ];
@@ -382,6 +402,27 @@ function renderPlaylist(root, route) {
   body.append(list);
 }
 
+function renderFavorites(root) {
+  const body = h('div.view-body');
+  const io2 = observer(body);
+  const favs = store.state.favorites;
+  const playAll = h('button.btn.primary', { disabled: !favs.length, onclick: () => { P.play(favs.map((f) => (f.url ? P.streamItem(f.url, f.name) : P.toItem({ ...f, ext: '' }))), 0, 'Favorites'); router.go({ view: 'player' }); } }, ico('play', 16), 'Play');
+  root.append(viewHead({ crumbs: [{ name: 'Playlists', go: () => router.go({ view: 'playlists' }) }, { name: 'Favorites' }], count: `${favs.length} items`, tools: [playAll] }), body);
+  if (!favs.length) {
+    body.append(emptyState({ title: 'No favorites yet', text: 'Press the heart in the player (or Ctrl+D) to save something here.' }));
+    return;
+  }
+  const list = h('div.list.single');
+  favs.forEach((it, i) => {
+    const entry = { ...it, type: 'file' };
+    const t = it.url ? h('div.rthumb', { html: icon('network', 18) }) : thumb(entry, 'rthumb', { glyph: 18 });
+    const remove = iconButton('close', { title: 'Remove from favorites', size: 16, onclick: (ev) => { ev.stopPropagation(); store.update((s) => { s.favorites.splice(i, 1); }, 'favorites'); } });
+    list.append(h('button.row', { onclick: () => { P.play(favs.map((f) => (f.url ? P.streamItem(f.url, f.name) : P.toItem({ ...f, ext: '' }))), i, 'Favorites'); router.go({ view: 'player' }); } }, t, h('span.rname', null, stripExt(it.name)), remove));
+    if (!it.url) io2.observe(t);
+  });
+  body.append(list);
+}
+
 // ------------------------------------------------------------ entry
 
 export function renderView(root, route) {
@@ -393,5 +434,6 @@ export function renderView(root, route) {
     case 'network': return renderNetwork(root);
     case 'playlists': return renderPlaylists(root);
     case 'playlist': return renderPlaylist(root, route);
+    case 'favorites': return renderFavorites(root);
   }
 }

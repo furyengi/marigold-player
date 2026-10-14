@@ -4,6 +4,7 @@ import * as P from './player.js';
 import { addFolder } from './library.js';
 import { showMenu, toast, promptBox, confirmBox } from './ui.js';
 import { openProperties } from './dialogs.js';
+import { bus } from './bus.js';
 
 export function playEntries(entries, index) {
   const files = entries.filter((e) => e.type !== 'dir');
@@ -13,21 +14,21 @@ export function playEntries(entries, index) {
 }
 
 export async function openFilesDialog() {
-  const paths = await window.vlc.pickFiles('media');
+  const paths = await window.native.pickFiles('media');
   if (!paths.length) return;
-  const entries = await window.vlc.expand(paths);
+  const entries = await window.native.expand(paths);
   playEntries(entries, 0);
 }
 
 export async function openMediaPaths(paths, { enqueue = false } = {}) {
-  const entries = await window.vlc.expand(paths);
+  const entries = await window.native.expand(paths);
   if (!entries.length) { toast('No playable media found'); return; }
   if (enqueue && P.player.current) { P.enqueue(entries.map(P.toItem)); toast(`Added ${entries.length} item${entries.length > 1 ? 's' : ''} to the queue`); }
   else playEntries(entries, 0);
 }
 
 export async function addFolderFlow(kind) {
-  const dir = await window.vlc.pickFolder();
+  const dir = await window.native.pickFolder();
   if (!dir) return null;
   addFolder(dir, kind);
   toast('Folder added to your library');
@@ -35,7 +36,7 @@ export async function addFolderFlow(kind) {
 }
 
 export async function playFolder(dir, { enqueue = false } = {}) {
-  const entries = await window.vlc.expand([dir]);
+  const entries = await window.native.expand([dir]);
   if (!entries.length) { toast('No playable media in this folder'); return; }
   if (enqueue && P.player.current) { P.enqueue(entries.map(P.toItem)); toast(`Added ${entries.length} items to the queue`); }
   else playEntries(entries, 0);
@@ -65,7 +66,7 @@ export function playPlaylist(id, start = 0) {
   const p = store.state.playlists.find((x) => x.id === id);
   if (!p || !p.items.length) return;
   const items = p.items.map((i) => (i.url ? P.streamItem(i.url, i.name) : P.toItem({ ...i, ext: '' })));
-  P.play(items, start);
+  P.play(items, start, p.name);
   router.go({ view: 'player' });
 }
 
@@ -86,10 +87,21 @@ export async function renamePlaylist(id) {
 
 // ------------------------------------------------------------ context menus
 
+const isFavorite = (e) => store.state.favorites.some((f) => f.path && f.path === e.path);
+function toggleFav(e) {
+  const on = isFavorite(e);
+  store.update((s) => {
+    if (on) s.favorites = s.favorites.filter((f) => f.path !== e.path);
+    else s.favorites.unshift({ path: e.path, name: e.name, kind: e.kind });
+  }, 'favorites');
+  toast(on ? 'Removed from favorites' : 'Added to favorites');
+}
+
 export function fileMenu(anchor, entry, { onPlay, extra = [] } = {}) {
   const pls = store.state.playlists;
   const item = [
     { label: 'Play', icon: 'play', onClick: onPlay },
+    { label: isFavorite(entry) ? 'Remove from favorites' : 'Add to favorites', icon: 'heart', onClick: () => toggleFav(entry) },
     { label: 'Play next', icon: 'next', onClick: () => { P.enqueue([P.toItem(entry)], true); toast('Will play next'); }, disabled: !P.player.current },
     { label: 'Add to queue', icon: 'queue', onClick: () => { P.enqueue([P.toItem(entry)]); toast('Added to queue'); } },
     { sep: true },
@@ -98,7 +110,7 @@ export function fileMenu(anchor, entry, { onPlay, extra = [] } = {}) {
     { label: 'New playlist…', icon: 'plus', onClick: () => newPlaylist([entry]) },
     { sep: true },
     ...extra,
-    { label: 'Show in folder', icon: 'folder', onClick: () => window.vlc.show(entry.path) },
+    { label: 'Show in folder', icon: 'folder', onClick: () => window.native.show(entry.path) },
     { label: 'Properties', icon: 'info', onClick: () => openProperties(entry) },
   ];
   showMenu(anchor, item);
@@ -109,8 +121,9 @@ export function folderMenu(anchor, entry, { onOpen, root } = {}) {
     { label: 'Open', icon: 'folder', onClick: onOpen },
     { label: 'Play all', icon: 'play', onClick: () => playFolder(entry.path) },
     { label: 'Add to queue', icon: 'queue', onClick: () => playFolder(entry.path, { enqueue: true }), disabled: !P.player.current },
+    { label: 'Add subtitles…', icon: 'subtitles', onClick: async () => { const files = await window.native.expand([entry.path]); bus.openAddSubtitles({ title: `Add subtitles to ${entry.name || 'this folder'}`, items: files.filter((x) => x.kind === 'video') }); } },
     { sep: true },
-    { label: 'Show in folder', icon: 'folder', onClick: () => window.vlc.show(entry.path) },
+    { label: 'Show in folder', icon: 'folder', onClick: () => window.native.show(entry.path) },
     root && { label: 'Remove from library', icon: 'trash', danger: true, onClick: () => store.update((s) => { s.folders = s.folders.filter((f) => f.id !== root.id); }, 'folders') },
   ]);
 }
@@ -118,7 +131,7 @@ export function folderMenu(anchor, entry, { onOpen, root } = {}) {
 export function addMenu(anchor, opts) {
   showMenu(anchor, [
     { label: 'Open files…', icon: 'play', kbd: 'Ctrl+O', onClick: openFilesDialog },
-    { label: 'Open folder…', icon: 'folder', kbd: 'Ctrl+Shift+O', onClick: async () => { const d = await window.vlc.pickFolder(); if (d) openMediaPaths([d]); } },
+    { label: 'Open folder…', icon: 'folder', kbd: 'Ctrl+Shift+O', onClick: async () => { const d = await window.native.pickFolder(); if (d) openMediaPaths([d]); } },
     { label: 'Open network stream…', icon: 'network', kbd: 'Ctrl+N', onClick: () => import('./dialogs.js').then((m) => m.openNetwork()) },
     { sep: true },
     { label: 'Add video folder to library…', icon: 'video', onClick: () => addFolderFlow('video') },
